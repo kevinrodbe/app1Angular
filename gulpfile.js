@@ -17,44 +17,115 @@ var gulp = require('gulp'),
 	Filter = require('gulp-filter'), //Concatenar stylus al css
 	newer = require('gulp-newer'),
 	connect = require('gulp-connect-php'),
-	browserSync = require('browser-sync');
+	conecta=require('gulp-connect'),/* otra alternativa al gulp-connect-php. solo que con html */
+	useref=require('gulp-useref'),
+	stylish=require('jshint-stylish'), /* mejorar la lectura de errores js en la terminal */
+	historyApiFallback=require('connect-history-api-fallback'),
+	inject=require('gulp-inject'),
+	browserSync = require('browser-sync'),
+	templateCache=require('gulp-angular-templatecache'),
+	uncss=require('gulp-uncss'),
+	wiredep=require('wiredep').stream;
 /* Configuración global */
 var path={
-	inputStylus:'./desarrollo/css/*.styl',
-	inputCss:'./desarrollo/css/*.css',
+	inputStylus:'./app/css/*.styl',
+	inputCss:'./app/css/*.css',
 	nameCss:'style.min.css',
-	outputStylus:'./desarrollo/css/',
-	outputCss:'./produccion/css/',
+	outputStylus:'./app/css/',
+	outputCss:'./dist/css/',
 
-	inputSass:'./desarrollo/sass/**/*.scss',
+	inputSass:'./app/sass/**/*.scss',
 	nameSass:'materialize.min.css',
-	ouputSass:'./desarrollo/css/',
+	ouputSass:'./app/css/',
 
-	inputJsGeneral:'./desarrollo/js/general/*.js',
+	inputJsGeneral:'./app/js/general/*.js',
 	nameJsGeneral:'jsgeneral.min.js',
-	outputJsGeneral:'./produccion/js/general/',
+	outputJsGeneral:'./dist/js/general/',
 
-	inputMyapp:'./desarrollo/js/myapp/*.js',
+	inputMyapp:'./app/js/myapp/*.js',
 	nameMyapp:'myapp.min.js',
-	outputMyapp:'./produccion/js/myapp/',
+	outputMyapp:'./dist/js/myapp/',
 
-	inputJsFramework:'./desarrollo/js/lib/framework/*.js',
+	inputJsFramework:'./app/js/lib/framework/*.js',
 	nameJsFramework:'framework.js',
-	outputJsFramework:'./produccion/js/lib/framework/',
+	outputJsFramework:'./dist/js/lib/framework/',
 
-	inputJsLibreria:'./desarrollo/js/lib/utilitario/*.js',
-	outputJsLibreria:'./produccion/js/lib/utilitario/',
+	inputJsLibreria:'./app/js/lib/utilitario/*.js',
+	outputJsLibreria:'./dist/js/lib/utilitario/',
 
-	inputImg:'./desarrollo/img/*.{gif,png,jpg,svg,jpeg}',
-	outputImg:'./produccion/img/'
+	inputImg:'./app/img/*.{gif,png,jpg,svg,jpeg}',
+	outputImg:'./dist/img/',
+
+	inputHtml:'./app/**/*.html',
+	inputJs:'./app/js/**/*.js'
 };
 var myFiles=[path.outputCss,path.ouputSass,path.outputJsGeneral,path.outputMyapp,path.outputJsFramework,path.outputJsLibreria];
-/* Server: Variables de desarrollo
+/* Server: Variables de desarrollo para FTP
 	var host = 'kevin.dhdinc.com',
     user = 'kevindhd',
     pass = 'kevrod100'
     port = '2082',
     remotePathp = '/public_html/guru/' */
+/* Crear server */
+gulp.task('server',function(){
+	conecta.server({
+		root: './app',
+		hostname: '0.0.0.0',
+		port: 8082,
+		livereload: true,
+		middleware: function(connect,opt){
+			return [ historyApiFallback ];
+		}
+	});
+});
+/* recargar navegador cuando cambia html */
+gulp.task('html',function(){
+	gulp.src(path.inputHtml)
+	.pipe(conecta.reload());
+});
+gulp.task('jshint',function(){
+	gulp.src(path.inputJs)
+	.pipe(jshint('.jshintrc'))
+	.pipe(jshint.reporter('jshint-stylish'))
+	.pipe(jshint.reporter('fail'));
+});
+/* Busca en las carpeta de css y js los archivos que hayamos creado
+para inyectarlos en el index.html */
+gulp.task('inject',function(){
+	var sources=gulp.src([path.inputJs,'./app/css/**/*.css']);
+	return gulp.src('index.html',{cwd:'./app'})
+	.pipe(inject(sources,{
+		read:false,
+		ignorePath:'/app'
+	}))
+	.pipe(gulp.dest('./app'));
+});
+gulp.task('templates', function() {
+	gulp.src('./app/views/**/*.tpl.html')
+		.pipe(templateCache({
+			root: 'views/',
+			module: 'blog.templates',
+			standalone: true
+		}))
+		.pipe(gulp.dest('./app/js'));
+});
+//	Elimina	el	CSS	que	no	es	utilizado	para	reducir	el	peso	del	archivo
+gulp.task('uncss', function() {
+  gulp.src('./dist/css/style.min.css')
+    .pipe(uncss({
+      html: ['./app/index.html', './app/views/*.tpl.html']
+    }))
+    .pipe(gulp.dest('./dist/css'));
+});
+
+/* inyecta las librerias que instalemos via bower -- sale error
+gulp.task('wiredep',function(){
+	gulp.src('./app/index.html')
+	.pipe(wiredep({
+		directory:'./app/lib'
+	}))
+	.pipe(gulp.dest('./app'));
+}); */
 /* server php
 gulp.task('connect', function() {
 	connect.server();
@@ -66,7 +137,7 @@ gulp.task('cbs', function() {
       proxy: 'localhost:80/Copy/manya%20proyectos/puntoHogar/'
     });
   });
- 
+
   gulp.watch('**/*.php').on('change', function () {
     browserSync.reload();
   });
@@ -99,7 +170,8 @@ gulp.task('bsReload', function () {
 gulp.task('nib', function(){
     gulp.src(path.inputStylus)
         .pipe(stylus({ use: [nib()], compress: true }))
-        .pipe(gulp.dest(path.outputStylus));
+        .pipe(gulp.dest('./app/css/'))
+        .pipe(conecta.reload());
 });
 /* compilando stylus, concatenando y minificando todos los css */
 gulp.task('css', function () {
@@ -111,7 +183,8 @@ gulp.task('css', function () {
 		.pipe(filter.restore())
 		.pipe(concat(path.nameCss))
 		.pipe(minifyCSS())
-		.pipe(gulp.dest(path.outputCss));
+		.pipe(gulp.dest(path.outputCss))
+		.pipe(conecta.reload());
 });
 /* compilar sass */
 gulp.task('sass', function () {
@@ -160,9 +233,9 @@ gulp.task('copyLibreria', function() {
 gulp.task('img', function() {
     gulp.src(path.inputImg)
 		.pipe(newer(path.outputImg))
-		.pipe(imagemin({ 
+		.pipe(imagemin({
 			progressive: true ,
-			interlaced: true, 
+			interlaced: true,
 			svgoPlugins: [{removeViewBox: false}],
 			use: [
 				pngquant({quality: '60-80', speed: 4})
@@ -189,33 +262,10 @@ gulp.task('ver', function () {
 	/* watch para js libreria */
 	gulp.watch(path.inputJsLibreria, ['copyLibreria','bsReload']);
 });
-/*
-js/source/alone.js
-js/source/[asterisco].js
-js/[Asterisco][Asterisco]/[Asterisco].js coincide con los archivos que terminen en .js dentro de la carpeta js y dentro de todas sus sub-carpetas
-!js/source/3.js Excluye especificamente el archivo 3.js.
-static/*.+(js|css) coincide con los archivos que terminen en .js ó .css
-/* 
-Se define la tarea estaticos, la cual corra otras 3 tareas
-gulp.task('estaticos', ['imagenes', 'css', 'js']);
-*/
 
-/*
-Ejecutar la tarea css cuando la tarea imagenes haya terminado
-gulp.task('css', ['imagenes'], function () {...});
-*/
-
-/*
-definimos una tarea por defecto
-gulp.task('default', function () {...});
-o que una tarea por defecto sea una lista de tareas
-gulp.task('default', ['css', 'js']);
-para ejecutar ponemos en la terminal: gulp
-*/
-
-/*Cada vez que se modifique un file dentro de source se ejecutará la tarea js*/
-//gulp.watch('js/source/*.js', ['js']);
- /*gulp.watch('js/source/*.js', function(){
- aquí va el cod a ejecutar, o también se podría ejecutar una tarea mediante el metodo gulp.start('miTarea')}); */
-
-
+gulp.task('checa',function(){
+	gulp.watch(path.inputHtml,['html']);
+	gulp.watch(path.inputStylus, ['nib']);/*
+	gulp.watch([path.inputJs,'./Gulpfile.js'], ['inject']);*/
+});
+gulp.task('default',['server','templates','checa']);

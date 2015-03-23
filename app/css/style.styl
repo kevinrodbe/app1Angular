@@ -1,0 +1,113 @@
+@import "nib"
+vendor-prefixes = webkit o ms moz official
+@import url(http://fonts.googleapis.com/css?family=Raleway:400,300);
+b_silver = #ddd
+body
+	font-family 'Raleway', sans-serif
+	font-size 16px
+a
+	text-decoration none !important
+.contenedor {
+	padding-right: 15px;
+	padding-left: 15px;
+	margin-right: auto;
+	margin-left: auto;
+}
+@media (min-width: 768px) {
+	.contenedor {
+		width: 750px;
+	}
+}
+@media (min-width: 992px) {
+	.contenedor {
+		width: 970px;
+	}
+}
+@media (min-width: 1200px) {
+	.contenedor {
+		width: 1170px;
+	}
+}
+/*Helpers;*/
+.cleaner
+	box-sizing border-box
+		*zoom: 1;
+	&:before
+	&:after
+		display table
+		line-height 0
+		content ""
+	&:after
+		clear both
+label.error
+	display none !important;
+.error
+	background #f07575 /*#f23655*//*#FC9494*/
+	color #fff
+	border 2px solid #c7c7c7 !important
+	animation 0.7s 1 wobble-horizontal linear
+@keyframes wobble-horizontal {
+	16.65% {
+		transform translateX(8px)
+	}
+	33.3% {
+		transform translateX(-6px)
+	}
+	49.95% {
+		transform: translateX(4px)
+	}
+	66.6% {
+		transform translateX(-2px)
+	}
+	83.25% {
+		transform translateX(1px)
+	}
+	100% {
+		transform translateX(0)
+	}
+}
+.margin10Bottom
+	margin-bottom 10px
+.margin10Top
+	margin-top	10px
+.noPadding
+	padding 0 !important
+ol
+ul
+	list-style none
+	padding 0
+	margin auto
+	text-align center
+/* Titulo Section general */
+.tituloBox
+	.tituloTexto
+		h2
+			span
+				color rojo
+/***************************************************
+					Loading
+****************************************************/
+.blog-post-list
+	list-style-type	none
+	.blog-post-link
+		font-family	'Raleway'
+		margin .5em 0 1em 0
+		padding	0 0 .25em 0
+		border-bottom 1px solid b_silver
+.blog-post
+	.blog-post-header
+		h1
+			font-family 'Raleway'
+.comments
+	.comments-list
+		list-style-type none
+		.comment-item
+			border 1px solid b_silver
+			border-radius 5px
+			padding .5em
+			margin .5em
+			.comment-author
+				font-family 'Raleway'
+				font-weight bold
+			.comment-body
+				font-style italic
