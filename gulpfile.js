@@ -24,7 +24,7 @@ var gulp = require('gulp'),
 	inject=require('gulp-inject'),
 	browserSync = require('browser-sync'),
 	templateCache=require('gulp-angular-templatecache'),
-	uncss=require('gulp-uncss'),
+	//uncss=require('gulp-uncss'),
 	wiredep=require('wiredep').stream;
 /* Configuración global */
 var path={
@@ -110,13 +110,13 @@ gulp.task('templates', function() {
 		.pipe(gulp.dest('./app/js'));
 });
 //	Elimina	el	CSS	que	no	es	utilizado	para	reducir	el	peso	del	archivo
-gulp.task('uncss', function() {
+/*gulp.task('uncss', function() {
   gulp.src('./dist/css/style.min.css')
     .pipe(uncss({
       html: ['./app/index.html', './app/views/*.tpl.html']
     }))
     .pipe(gulp.dest('./dist/css'));
-});
+});*/
 
 /* inyecta las librerias que instalemos via bower -- sale error
 gulp.task('wiredep',function(){
